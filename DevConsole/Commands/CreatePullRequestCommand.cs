@@ -81,6 +81,7 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
             throw new UserActionException("Work item not found");
         }
 
+        title ??= branchName;
         if (string.IsNullOrWhiteSpace(title))
         {
             // title = GetWorkItem(workItemId.Value).Output?.Fields.Title;
