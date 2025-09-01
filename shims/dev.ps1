@@ -19,10 +19,10 @@ $configuration = If ($args.Contains("[debug]")) {"Debug"} Else {"Release"}
 $rebuild = $true
 
 $targetPath = Join-Path -Path $scriptPath -ChildPath "..\DevConsole"
-$consolePath = Join-Path -Path $targetPath -ChildPath "bin\$configuration\net7.0\DevConsole.exe"
+$consolePath = Join-Path -Path $targetPath -ChildPath "bin\$configuration\net9.0\DevConsole.exe"
 
 if ($IsMacOS -or $IsLinux) {
-    $consolePath = Join-Path -Path $targetPath -ChildPath "bin\$configuration\net7.0\DevConsole"
+    $consolePath = Join-Path -Path $targetPath -ChildPath "bin\$configuration\net9.0\DevConsole"
 }
 
 $updateCheckSaveFile = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "dev-console-update-check"
@@ -48,7 +48,7 @@ if (Test-Path $buildSaveFile) {
 $lastModified = Get-ChildItem -Path $targetPath -Exclude bin, obj | Get-ChildItem -File -Recurse | Sort-Object -Descending -Property LastWriteTimeUtc | Select-Object -ExpandProperty LastWriteTimeUtc -First 1
 
 if ($rebuild -and ($lastBuild -ne $lastModified.ToString("o") -or !(Test-Path $consolePath))) {
-    AssertDotnetVersion 7
+    AssertDotnetVersion 9
     Write-Output "Change detected. Building..."
     dotnet build $targetPath --configuration $configuration | Out-Null
     if(!$?) {

@@ -29,7 +29,7 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
         AddOption(new Option<bool>(new[] { "-a", "--auto-create" }, "Automatically create pull request"));
         AddOption(new Option<bool>(new[] { "-d", "--draft" }, "Create pull request in draft mode"));
         AddOption(new Option<bool>(new[] { "-c", "--set-auto-complete" },
-            "Sets the pull request to auto-complete and approves it by you. Used with --auto-create"));
+            "Sets the pull request to auto-complete. Used with --auto-create"));
 
         AddOption(new Option<string>(new[] { "-t", "--title" },
             "Define title for automatically created pull request, used with --auto-create"));
@@ -55,7 +55,7 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
             ManuallyCreatePullRequest();
         }
 
-        MoveWorkItemToCodeReview();
+        //MoveWorkItemToCodeReview();
     }
 
     private void MoveWorkItemToCodeReview()
@@ -83,12 +83,14 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
 
         if (string.IsNullOrWhiteSpace(title))
         {
-            title = GetWorkItem(workItemId.Value).Output?.Fields.Title;
+            // title = GetWorkItem(workItemId.Value).Output?.Fields.Title;
+            //
+            // if (string.IsNullOrWhiteSpace(title))
+            // {
+            //     throw new UserActionException("You must define a title");
+            // }
 
-            if (string.IsNullOrWhiteSpace(title))
-            {
-                throw new UserActionException("You must define a title");
-            }
+            throw new UserActionException("You must define a title");
         }
 
         var pullRequest = GetJsonOutput<PullRequest>("az repos pr create " +
@@ -96,8 +98,9 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
                                                      $"--draft {draft} " +
                                                      $"--auto-complete {setAutoComplete} " +
                                                      "--delete-source-branch " +
-                                                     "--transition-work-items " +
-                                                     $"--work-items {workItemId} " +
+
+                                                     //"--transition-work-items " +
+                                                     //$"--work-items {workItemId} " +
                                                      $"{(!stopOpenBrowser ? "--open" : string.Empty)}");
 
         if (pullRequest.Output != null)
@@ -106,12 +109,12 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
 
             if (setAutoComplete)
             {
-                Run($"az repos pr set-vote --id {pullRequest.Output.PullRequestId} --vote approve",
-                    outputHandler: SuppressOutputHandler.Instance);
-
-                ColorConsole.WriteLine(
-                    $"Pull request {pullRequest.Output.PullRequestId} automatically approved by you.",
-                    ConsoleColor.Green);
+                // Run($"az repos pr set-vote --id {pullRequest.Output.PullRequestId} --vote approve",
+                //     outputHandler: SuppressOutputHandler.Instance);
+                //
+                // ColorConsole.WriteLine(
+                //     $"Pull request {pullRequest.Output.PullRequestId} automatically approved by you.",
+                //     ConsoleColor.Green);
 
                 Run($"az repos pr update --id {pullRequest.Output.PullRequestId} " +
                     $"--merge-commit-message \"Merged PR {pullRequest.Output.PullRequestId}: {title}. Related work items: #{workItemId}\"",

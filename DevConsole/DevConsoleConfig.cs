@@ -4,9 +4,9 @@ namespace DevConsole;
 
 public class DevConsoleConfig
 {
-    public string AzureDevOpsOrganizationName => throw new UserActionException("Please set AzureDevOpsOrganizationName in DevConsole/DevConsoleConfig.cs");
+    public string AzureDevOpsOrganizationName => "HeadFirstGames";
 
-    public string AzureDevOpsProjectName => throw new UserActionException("Please set AzureDevOpsProjectName in DevConsole/DevConsoleConfig.cs");
+    public string AzureDevOpsProjectName => "Balrog";
 
     public string AzureDevOpsOrganizationUri => $"https://dev.azure.com/{AzureDevOpsOrganizationName}";
 
