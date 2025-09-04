@@ -96,7 +96,7 @@ public sealed class CreateBranchCommand : DevConsoleCommand
 
         if (checkOutMaster)
         {
-            Run("git checkout master");
+            Run("git checkout main");
             Run("git pull");
         }
 

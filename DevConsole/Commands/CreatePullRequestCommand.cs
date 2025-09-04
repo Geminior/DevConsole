@@ -97,6 +97,7 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
         var pullRequest = GetJsonOutput<PullRequest>("az repos pr create " +
                                                      $"--title \"{title}\" " +
                                                      $"--squash true " +
+                                                     $"--transition-work-items false " +
                                                      $"--draft {draft} " +
                                                      $"--auto-complete {setAutoComplete} " +
                                                      "--delete-source-branch " +
