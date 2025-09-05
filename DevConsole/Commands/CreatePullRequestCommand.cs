@@ -26,10 +26,10 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
         _versionBumper = versionBumper;
         _devConsoleConfig = devConsoleConfig;
 
-        AddOption(new Option<bool>(new[] { "-a", "--auto-create" }, "Automatically create pull request"));
+        AddOption(new Option<bool>(new[] { "-m", "--manual-create" }, "Manually create pull request"));
         AddOption(new Option<bool>(new[] { "-d", "--draft" }, "Create pull request in draft mode"));
-        AddOption(new Option<bool>(new[] { "-c", "--set-auto-complete" },
-            "Sets the pull request to auto-complete. Used with --auto-create"));
+        AddOption(new Option<bool>(new[] { "-nc", "--no-auto-complete" },
+            "Do not set the pull request to auto-complete."));
 
         AddOption(new Option<string>(new[] { "-t", "--title" },
             "Define title for automatically created pull request, used with --auto-create"));
@@ -42,17 +42,17 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
         Handler = CommandHandler.Create<bool, bool, bool, string, bool>(DoCommand);
     }
 
-    private void DoCommand(bool autoCreate, bool draft, bool setAutoComplete, string title, bool stopOpenBrowser)
+    private void DoCommand(bool manualCreate, bool draft, bool noAutoComplete, string title, bool stopOpenBrowser)
     {
         _azureDevOpsService.EnsureAzCliVersions();
 
-        if (autoCreate)
+        if (manualCreate)
         {
-            AutoCreatePullRequest(title, stopOpenBrowser, draft, setAutoComplete);
+            ManuallyCreatePullRequest();
         }
         else
         {
-            ManuallyCreatePullRequest();
+            AutoCreatePullRequest(title, stopOpenBrowser, draft, noAutoComplete);
         }
 
         //MoveWorkItemToCodeReview();
@@ -71,7 +71,7 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
         Run($"az boards work-item update --id {workItemId} -f Microsoft.VSTS.Common.ResolvedReason=\"Fixed\" System.State=\"Code review\"", outputHandler: SuppressOutputHandler.Instance);
     }
 
-    private void AutoCreatePullRequest(string? title, bool stopOpenBrowser, bool draft, bool setAutoComplete)
+    private void AutoCreatePullRequest(string? title, bool stopOpenBrowser, bool draft, bool noAutoComplete)
     {
         var branchName = GetBranchName();
         var workItemId = GetWorkItemIdFromBranchName(branchName);
@@ -99,7 +99,7 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
                                                      $"--squash true " +
                                                      $"--transition-work-items false " +
                                                      $"--draft {draft} " +
-                                                     $"--auto-complete {setAutoComplete} " +
+                                                     $"--auto-complete {!noAutoComplete} " +
                                                      "--delete-source-branch " +
 
                                                      //"--transition-work-items " +
@@ -110,7 +110,7 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
         {
             ColorConsole.WriteLine($"Pull request {pullRequest.Output.PullRequestId} created", ConsoleColor.Green);
 
-            if (setAutoComplete)
+            if (!noAutoComplete)
             {
                 // Run($"az repos pr set-vote --id {pullRequest.Output.PullRequestId} --vote approve",
                 //     outputHandler: SuppressOutputHandler.Instance);
