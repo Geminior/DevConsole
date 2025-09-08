@@ -13,6 +13,7 @@ namespace DevConsole;
 [Singleton<AzureLoginCommand>]
 [Singleton<CheckForUpdateCommand>]
 [Singleton<CreateBranchCommand>]
+[Singleton<GitPruneCommand>]
 [Singleton<CreatePullRequestCommand>]
 [Singleton<BackendRootCommand>]
 [Singleton<ListNuGetDependenciesCommand>]

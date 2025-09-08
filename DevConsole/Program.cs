@@ -99,6 +99,7 @@ public static class Program
         rootNode.AddCommand<CheckForUpdateCommand>();
         rootNode.AddCommand<CreateBranchCommand>();
         rootNode.AddCommand<CreatePullRequestCommand>();
+        rootNode.AddCommand<GitPruneCommand>();
 
         rootNode.AddCommand<BackendRootCommand>(backendNode =>
         {

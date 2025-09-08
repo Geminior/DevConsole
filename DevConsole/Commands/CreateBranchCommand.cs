@@ -14,6 +14,7 @@ namespace DevConsole.Commands;
 
 public sealed class CreateBranchCommand : DevConsoleCommand
 {
+    public const string FeaturePrefix = "feature/";
     private readonly AzureDevOpsService _azureDevOpsService;
     private readonly Prompts _promptService;
 
@@ -127,9 +128,9 @@ public sealed class CreateBranchCommand : DevConsoleCommand
 
     private static string GetBranchName(string name, bool isExperimental = false)
     {
-        var prefix = isExperimental ? "experiment" : "feature";
+        var prefix = isExperimental ? "experiment/" : FeaturePrefix;
         var title = Sanitize(name);
-        return $"{prefix}/{title}";
+        return $"{prefix}{title}";
     }
 
     private static string Sanitize(string input)
