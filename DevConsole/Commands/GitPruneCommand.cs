@@ -22,10 +22,12 @@ public sealed class GitPruneCommand : DevConsoleCommand
         _promptService = promptService;
         Handler = CommandHandler.Create(DoCommand);
 
+        AddOption(new Option<bool>(["-ar", "--allow-root"], "Allow deletion of the root branches (not limited to /feature/*)"));
+
         AddAlias("gp");
     }
 
-    private void DoCommand()
+    private void DoCommand(bool allowRoot)
     {
         //Get remote branches
         RunSupressed("git fetch --prune");
@@ -33,11 +35,11 @@ public sealed class GitPruneCommand : DevConsoleCommand
         //Get branches
         var currentBranch = GetOutput("git branch --show-current").Output.Trim();
         var localBranches = GetOutput("git branch -l").Output.Split('\n').Select(b => b.Trim()).ToHashSet();
-        var remoteBranches = GetOutput("git branch -l -r").Output.Split('\n').Select(b => b.Trim()).ToHashSet();
+        var remoteBranches = GetOutput("git branch -l -r").Output.Split('\n').Select(b => b.Replace("origin/", string.Empty).Trim()).ToArray();
 
         var branchesToDelete = localBranches
                                .Where(b => !remoteBranches.Contains(b)
-                                           && b.StartsWith(CreateBranchCommand.FeaturePrefix, StringComparison.OrdinalIgnoreCase)
+                                           && (allowRoot || b.StartsWith(CreateBranchCommand.FeaturePrefix, StringComparison.OrdinalIgnoreCase))
                                            && !b.Contains(currentBranch, StringComparison.OrdinalIgnoreCase))
                                .ToArray();
 
