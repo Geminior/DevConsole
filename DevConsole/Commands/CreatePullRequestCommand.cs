@@ -76,10 +76,10 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
         var branchName = GetBranchName();
         var workItemId = GetWorkItemIdFromBranchName(branchName);
 
-        if (workItemId == null)
-        {
-            throw new UserActionException("Work item not found");
-        }
+        // if (workItemId == null)
+        // {
+        //     throw new UserActionException("Work item not found");
+        // }
 
         title ??= branchName;
         if (string.IsNullOrWhiteSpace(title))
