@@ -46,52 +46,51 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
     {
         _azureDevOpsService.EnsureAzCliVersions();
 
+        long? workItemId = null;
         if (manualCreate)
         {
             ManuallyCreatePullRequest();
         }
         else
         {
-            AutoCreatePullRequest(title, stopOpenBrowser, draft, noAutoComplete);
+            workItemId = AutoCreatePullRequest(title, stopOpenBrowser, draft, noAutoComplete);
         }
 
-        //MoveWorkItemToCodeReview();
+        MoveWorkItemToCodeReview(workItemId);
     }
 
-    private void MoveWorkItemToCodeReview()
+    private void MoveWorkItemToCodeReview(long? workItemId)
     {
-        var branchName = GetBranchName();
-        var workItemId = GetWorkItemIdFromBranchName(branchName);
-
         if (workItemId is null)
         {
             return;
         }
 
-        Run($"az boards work-item update --id {workItemId} -f Microsoft.VSTS.Common.ResolvedReason=\"Fixed\" System.State=\"Code review\"", outputHandler: SuppressOutputHandler.Instance);
+        TransitionJiraItem(workItemId.Value, "In Review");
+
+        // var branchName = GetBranchName();
+        // var workItemId = GetWorkItemIdFromBranchName(branchName);
+        //
+        // if (workItemId is null)
+        // {
+        //     return;
+        // }
+        //
+        // Run($"az boards work-item update --id {workItemId} -f Microsoft.VSTS.Common.ResolvedReason=\"Fixed\" System.State=\"Code review\"", outputHandler: SuppressOutputHandler.Instance);
     }
 
-    private void AutoCreatePullRequest(string? title, bool stopOpenBrowser, bool draft, bool noAutoComplete)
+    private long? AutoCreatePullRequest(string? title, bool stopOpenBrowser, bool draft, bool noAutoComplete)
     {
         var branchName = GetBranchName();
         var workItemId = GetWorkItemIdFromBranchName(branchName);
 
-        // if (workItemId == null)
-        // {
-        //     throw new UserActionException("Work item not found");
-        // }
-
-        title ??= branchName;
-        if (string.IsNullOrWhiteSpace(title))
+        if (!workItemId.HasValue)
         {
-            // title = GetWorkItem(workItemId.Value).Output?.Fields.Title;
-            //
-            // if (string.IsNullOrWhiteSpace(title))
-            // {
-            //     throw new UserActionException("You must define a title");
-            // }
-
-            throw new UserActionException("You must define a title");
+            title ??= branchName;
+        }
+        else if (string.IsNullOrWhiteSpace(title))
+        {
+            title = GetJiraItem(workItemId.Value).Output?.Summary ?? branchName;
         }
 
         var pullRequest = GetJsonOutput<PullRequest>("az repos pr create " +
@@ -132,6 +131,8 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
         {
             ColorConsole.Write($"Failed to create pull request: {pullRequest.Error}", ConsoleColor.Red);
         }
+
+        return workItemId;
     }
 
     private void ManuallyCreatePullRequest()
@@ -160,7 +161,7 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
 
     private long? GetWorkItemIdFromBranchName(string branchName)
     {
-        var workItemMatch = Regex.Match(branchName, "feature/(\\d+)-");
+        var workItemMatch = Regex.Match(branchName, "feature/\\D*(\\d+)-");
         if (workItemMatch.Success)
         {
             return long.Parse(workItemMatch.Groups[1].Value);

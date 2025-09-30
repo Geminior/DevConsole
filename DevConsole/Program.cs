@@ -100,6 +100,7 @@ public static class Program
         rootNode.AddCommand<CreateBranchCommand>();
         rootNode.AddCommand<CreatePullRequestCommand>();
         rootNode.AddCommand<GitPruneCommand>();
+        rootNode.AddCommand<JiraConfigCommand>();
 
         rootNode.AddCommand<BackendRootCommand>(backendNode =>
         {

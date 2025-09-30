@@ -19,9 +19,9 @@ public abstract class DevConsoleCommand : Command
         return ProcessHelper.GetOutput(command, outputCommand, workingDirectory, expectExitCodeToBeZero);
     }
 
-    protected static JsonProcessResult<T> GetJsonOutput<T>(string command, bool outputCommand = false, string? workingDirectory = null, bool expectExitCodeToBeZero = true, bool ignoreError = false) where T : class
+    protected static JsonProcessResult<T> GetJsonOutput<T>(string command, bool outputCommand = false, string? workingDirectory = null, bool expectExitCodeToBeZero = true, bool ignoreError = false, bool seekValidJsonStart = false) where T : class
     {
-        return ProcessHelper.GetJsonOutput<T>(command, outputCommand, workingDirectory, expectExitCodeToBeZero, ignoreError);
+        return ProcessHelper.GetJsonOutput<T>(command, outputCommand, workingDirectory, expectExitCodeToBeZero, ignoreError, seekValidJsonStart);
     }
 
     protected static int Run(string command, string? workingDirectory = null, bool outputCommand = true, bool expectExitCodeToBeZero = true, Dictionary<string, string?>? environmentVariables = null, IProcessOutputHandler? outputHandler = null)
@@ -59,6 +59,43 @@ public abstract class DevConsoleCommand : Command
         return GetJsonOutput<WorkItemResult[]>(
             "az boards query --wiql 'SELECT Id, Title, State, [System.WorkItemType] FROM WorkItems WHERE [System.AssignedTo] = @me AND [System.State] IN (''Ready'', ''New'', ''Active'') ORDER BY [System.WorkItemType] ASC, [System.ChangedDate] DESC'",
             true, expectExitCodeToBeZero: false);
+    }
+
+    protected JsonProcessResult<JiraIssue> GetJiraItem(long issueId)
+    {
+        var res = JiraConfig.GetJiraConfig();
+        if (!res.Successful)
+        {
+            return new JsonProcessResult<JiraIssue>(null, "Failed to get Jira Config");
+        }
+
+        var cfg = res.Value;
+        return GetJsonOutput<JiraIssue>(
+            $"acli --server {cfg.BaseUrl} " +
+            $"--user {cfg.UserEmail} " +
+            $"--token {cfg.ApiToken} " +
+            $"--outputType json " +
+            $"--action getIssue " +
+            $"--issue pb-{issueId}",
+            seekValidJsonStart: true);
+    }
+
+    protected void TransitionJiraItem(long issueId, string newState)
+    {
+        var res = JiraConfig.GetJiraConfig();
+        if (!res.Successful)
+        {
+            return;
+        }
+
+        var cfg = res.Value;
+        RunSupressed(
+            $"acli --server {cfg.BaseUrl} " +
+            $"--user {cfg.UserEmail} " +
+            $"--token {cfg.ApiToken} " +
+            $"--action transitionIssue " +
+            $"--issue pb-{issueId} " +
+            $"--transition \"{newState}\"");
     }
 
     protected JsonProcessResult<WorkItemResult> GetWorkItem(long workItemId)

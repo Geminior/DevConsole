@@ -28,20 +28,36 @@ public sealed class CreateBranchCommand : DevConsoleCommand
         AddAlias("cb");
 
         //AddArgument(new Argument<long?>("task-id"));
-        AddArgument(new Argument<string>("name"));
+        AddArgument(new Argument<string>("taskIdOrName", "Work item id or name"));
         AddOption(new Option<bool>(new[] { "-cm", "--checkout-master" }, "Switch to master branch."));
         AddOption(new Option<bool>(new[] { "-d", "--discard-all-changes" }, "Discard all changes."));
         AddOption(new Option<bool>(new[] { "-ex", "--experiment" }, "Experimental branch."));
         AddOption(new Option<bool>(new[] { "--ignore-work-item-state" }, "Ignores warning regarding work item state."));
     }
 
-    private void DoCommand(string name,
+    private void DoCommand(string taskIdOrName,
                            bool checkOutMaster = false,
                            bool discardAllChanges = false,
                            bool experiment = false,
                            bool ignoreWorkItemState = false)
     {
         _azureDevOpsService.EnsureAzCliVersions();
+
+        var name = taskIdOrName;
+        if (long.TryParse(taskIdOrName, out var id))
+        {
+            name = GetJiraItem(id).Output?.Summary;
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                TransitionJiraItem(id, "In Progress");
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            ColorConsole.Write("Invalid task id, or empty name", ConsoleColor.Red);
+            return;
+        }
 
         // WorkItemResult? workItem;
         //

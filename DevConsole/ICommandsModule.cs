@@ -14,6 +14,7 @@ namespace DevConsole;
 [Singleton<CheckForUpdateCommand>]
 [Singleton<CreateBranchCommand>]
 [Singleton<GitPruneCommand>]
+[Singleton<JiraConfigCommand>]
 [Singleton<CreatePullRequestCommand>]
 [Singleton<BackendRootCommand>]
 [Singleton<ListNuGetDependenciesCommand>]

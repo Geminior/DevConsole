@@ -70,15 +70,24 @@ public static class ProcessHelper
         return new ProcessResult(command, output, error, process.ExitCode);
     }
 
-    public static JsonProcessResult<T> GetJsonOutput<T>(string command, bool outputCommand = false,
-                                                        string? workingDirectory = null, bool expectExitCodeToBeZero = true, bool ignoreError = false) where T : class
+    public static JsonProcessResult<T> GetJsonOutput<T>(string command,
+                                                        bool outputCommand = false,
+                                                        string? workingDirectory = null,
+                                                        bool expectExitCodeToBeZero = true,
+                                                        bool ignoreError = false,
+                                                        bool seekValidJsonStart = false) where T : class
     {
         var untypedResult = GetOutput(command, outputCommand, workingDirectory, expectExitCodeToBeZero);
+        var json = untypedResult.Output;
+        if (seekValidJsonStart)
+        {
+            json = json[Math.Max(0, json.IndexOf('{'))..];
+        }
 
         var output = default(T?);
         if (untypedResult.ExitCode == 0 || untypedResult.Error.Length == 0 || ignoreError)
         {
-            output = JsonConvert.DeserializeObject<T>(untypedResult.Output);
+            output = JsonConvert.DeserializeObject<T>(json);
         }
 
         return new JsonProcessResult<T>(output, untypedResult.Error);
