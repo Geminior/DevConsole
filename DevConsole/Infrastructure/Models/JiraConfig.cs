@@ -9,8 +9,12 @@ public class JiraConfig
     private const string LocalStorageFileName = "JiraConfig.json";
 
     public string BaseUrl { get; init; } = "https://headfirstgames.atlassian.net";
+
     public required string UserEmail { get; init; }
+
     public required string ApiToken { get; init; }
+
+    public required string? BranchPrefix { get; init; }
 
     public static Result<JiraConfig> GetJiraConfig()
     {

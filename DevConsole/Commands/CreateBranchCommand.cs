@@ -46,9 +46,17 @@ public sealed class CreateBranchCommand : DevConsoleCommand
         var name = taskIdOrName;
         if (long.TryParse(taskIdOrName, out var id))
         {
-            name = GetJiraItem(id).Output?.Summary;
-            if (!string.IsNullOrWhiteSpace(name))
+            var item = GetJiraItem(id).Output;
+            if (item != null)
             {
+                var res = JiraConfig.GetJiraConfig();
+                if (!res.Successful)
+                {
+                    return;
+                }
+
+                var cfg = res.Value;
+                name = $"{cfg.BranchPrefix} {id} {name}";
                 TransitionJiraItem(id, "In Progress");
             }
         }
@@ -154,10 +162,12 @@ public sealed class CreateBranchCommand : DevConsoleCommand
         var patterns = new Dictionary<Regex, string>
         {
             { new Regex(@"['"":()[\],\*]"), string.Empty },
-            { new Regex(@"[ \\/]"), "_" },
+            { new Regex(@"\s*-\s*"), "-" },
+            { new Regex(@"[ \\/]"), "-" },
             { new Regex("[&]"), "and" }
         };
 
+        input = input.Trim();
         input = patterns.Aggregate(input, (current, pair) => pair.Key.Replace(current, pair.Value));
         const string invalidCharactersPattern = @"[\.!\?`]";
         return Regex.Replace(input, invalidCharactersPattern, string.Empty);

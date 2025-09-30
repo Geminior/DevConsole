@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 
 namespace DevConsole.Commands;
 
-public sealed class CreatePullRequestCommand : DevConsoleCommand
+public sealed partial class CreatePullRequestCommand : DevConsoleCommand
 {
     private readonly AzureDevOpsService _azureDevOpsService;
     private readonly DevConsoleConfig _devConsoleConfig;
@@ -161,7 +161,7 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
 
     private long? GetWorkItemIdFromBranchName(string branchName)
     {
-        var workItemMatch = Regex.Match(branchName, "feature/\\D*(\\d+)-");
+        var workItemMatch = TaskIdMatch().Match(branchName);
         if (workItemMatch.Success)
         {
             return long.Parse(workItemMatch.Groups[1].Value);
@@ -169,4 +169,7 @@ public sealed class CreatePullRequestCommand : DevConsoleCommand
 
         return null;
     }
+
+    [GeneratedRegex(@"feature/\D*(\d+)[-_]")]
+    private static partial Regex TaskIdMatch();
 }

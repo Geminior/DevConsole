@@ -32,9 +32,9 @@ namespace DevConsole.Infrastructure.Services
             return Convert.ToBase64String(memStream.ToArray());
         }
 
-        public static T Decrypt<T>(byte[] data, string password) => Decrypt<T>(Encoding.UTF8.GetString(data), password);
+        public static T? Decrypt<T>(byte[] data, string password) => Decrypt<T>(Encoding.UTF8.GetString(data), password);
 
-        public static T Decrypt<T>(string data, string password) => SerializationUtil.DeserializeCompact<T>(Decrypt(data, password));
+        public static T? Decrypt<T>(string data, string password) => SerializationUtil.DeserializeCompact<T>(Decrypt(data, password));
 
         public static string Decrypt(string data, string password)
         {

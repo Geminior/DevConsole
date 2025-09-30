@@ -29,10 +29,17 @@ public sealed class JiraConfigCommand : DevConsoleCommand
     {
         var email = _promptService.Input<string>("Enter your email address used for Jira login");
         var token = _promptService.Input<string>("Enter your Jira API token (you can create one at https://id.atlassian.com/manage/api-tokens)");
+        var prefix = _promptService.Input<string>("Enter optional branch name prefix");
+        if (string.IsNullOrWhiteSpace(prefix))
+        {
+            prefix = null;
+        }
+
         var cfg = new JiraConfig
         {
             UserEmail = email,
-            ApiToken = token
+            ApiToken = token,
+            BranchPrefix = prefix
         };
 
         var testResult = GetOutput(

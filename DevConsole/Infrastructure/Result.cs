@@ -24,7 +24,7 @@ public readonly struct Result<TValue, TStatus> where TStatus : Enum
     [MemberNotNullWhen(true, nameof(Value))]
     public bool Successful { get; }
 
-    public static implicit operator Result<TValue, TStatus>(TValue value) => new(value, default!, value is not null);
+    public static implicit operator Result<TValue, TStatus>(TValue? value) => new(value, default!, value is not null);
 
     public static implicit operator Result<TValue, TStatus>(TStatus status) => new(default, status, false);
 }
@@ -44,7 +44,7 @@ public readonly struct Result<TValue>
 
     public static Result<TValue> Fail() => new(default, false);
 
-    public static implicit operator Result<TValue>(TValue value) => new(value, value is not null);
+    public static implicit operator Result<TValue>(TValue? value) => new(value, value is not null);
 }
 
 public readonly struct ValueResult<TValue> where TValue : unmanaged
