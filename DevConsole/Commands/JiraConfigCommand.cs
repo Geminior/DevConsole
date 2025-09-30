@@ -42,16 +42,16 @@ public sealed class JiraConfigCommand : DevConsoleCommand
             BranchPrefix = prefix
         };
 
-        var testResult = GetOutput(
+        var testResult = Run(
             $"acli --server {cfg.BaseUrl} " +
             $"--user {cfg.UserEmail} " +
             $"--token {cfg.ApiToken} " +
             $"--action getUser " +
             $"--userId {cfg.UserEmail}", expectExitCodeToBeZero: false);
 
-        if (testResult.ExitCode != 0)
+        if (testResult != 0)
         {
-            ColorConsole.WriteFailure($"Jira Setup failed, ensure you have entered the correct credentials ({testResult.Error})");
+            ColorConsole.WriteFailure($"Jira Setup failed, ensure you have entered the correct credentials.");
             return;
         }
 
