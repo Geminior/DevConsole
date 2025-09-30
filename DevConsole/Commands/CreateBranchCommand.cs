@@ -56,7 +56,7 @@ public sealed class CreateBranchCommand : DevConsoleCommand
                 }
 
                 var cfg = res.Value;
-                name = $"{cfg.BranchPrefix} {id} {name}";
+                name = $"{cfg.BranchPrefix} {id} {item.Summary}";
                 TransitionJiraItem(id, "In Progress");
             }
         }
