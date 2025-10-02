@@ -56,7 +56,7 @@ public sealed class CreateBranchCommand : DevConsoleCommand
                 }
 
                 var cfg = res.Value;
-                name = $"{cfg.BranchPrefix} {id} {item.Summary}";
+                name = $"{cfg.BranchPrefix} {id} {item.Summary.ToLowerInvariant()}";
                 TransitionJiraItem(id, "In Progress");
             }
         }
@@ -154,7 +154,8 @@ public sealed class CreateBranchCommand : DevConsoleCommand
     {
         var prefix = isExperimental ? "experiment/" : FeaturePrefix;
         var title = Sanitize(name);
-        return $"{prefix}{title}";
+        name = $"{prefix}{title}";
+        return name.Length > 255 ? name[..255] : name;
     }
 
     private static string Sanitize(string input)
