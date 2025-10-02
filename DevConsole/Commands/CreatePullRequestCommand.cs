@@ -90,7 +90,7 @@ public sealed partial class CreatePullRequestCommand : DevConsoleCommand
         }
         else if (string.IsNullOrWhiteSpace(title))
         {
-            title = GetJiraItem(workItemId.Value).Output?.Summary ?? branchName;
+            title = (GetJiraItem(workItemId.Value).Output?.Summary ?? branchName).Replace("\"", "'");
         }
 
         var pullRequest = GetJsonOutput<PullRequest>("az repos pr create " +
