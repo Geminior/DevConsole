@@ -36,7 +36,7 @@ public sealed class CreateBranchCommand : DevConsoleCommand
     }
 
     private void DoCommand(string taskIdOrName,
-                           bool checkOutMaster = false,
+                           bool noMasterCheckOut = false,
                            bool discardAllChanges = false,
                            bool experiment = false,
                            bool ignoreWorkItemState = false)
@@ -119,7 +119,7 @@ public sealed class CreateBranchCommand : DevConsoleCommand
             Run("git reset --hard");
         }
 
-        if (checkOutMaster)
+        if (!noMasterCheckOut)
         {
             Run("git checkout main");
             Run("git pull");
