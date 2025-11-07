@@ -29,7 +29,7 @@ public sealed class CreateBranchCommand : DevConsoleCommand
 
         //AddArgument(new Argument<long?>("task-id"));
         AddArgument(new Argument<string>("taskIdOrName", "Work item id or name"));
-        AddOption(new Option<bool>(new[] { "-cm", "--checkout-master" }, "Switch to master branch."));
+        AddOption(new Option<bool>(new[] { "-nm", "--no-master-checkout" }, "Do not switch to master branch before branch creation."));
         AddOption(new Option<bool>(new[] { "-d", "--discard-all-changes" }, "Discard all changes."));
         AddOption(new Option<bool>(new[] { "-ex", "--experiment" }, "Experimental branch."));
         AddOption(new Option<bool>(new[] { "--ignore-work-item-state" }, "Ignores warning regarding work item state."));
