@@ -46,7 +46,9 @@ public static class ProcessHelper
         }
 
         var error = string.Empty;
+        var output = new StringBuilder(2000);
         process.ErrorDataReceived += (_, e) => error += e.Data;
+        process.OutputDataReceived += (_, e) => output.Append(e.Data);
         if (!process.Start())
         {
             throw new InvalidOperationException($"Failed to start process with command {command}");
@@ -57,17 +59,21 @@ public static class ProcessHelper
             process.StandardInput.WriteLine(input);
         }
 
+        // Use this instead of reading from Std out since it hangs sometimes if the process is too fast to exit.
+        process.BeginOutputReadLine();
         process.BeginErrorReadLine();
-        var output = process.StandardOutput.ReadToEnd().Trim();
 
-        process.WaitForExit();
+        if (!process.WaitForExit(5000))
+        {
+            throw new InvalidOperationException("Failed to wait for process to exit...");
+        }
 
         if (expectExitCodeToBeZero)
         {
-            ThrowOnErrorExitCode(command, process, output, error);
+            ThrowOnErrorExitCode(command, process, output.ToString(), error);
         }
 
-        return new ProcessResult(command, output, error, process.ExitCode);
+        return new ProcessResult(command, output.ToString(), error, process.ExitCode);
     }
 
     public static JsonProcessResult<T> GetJsonOutput<T>(string command,
@@ -156,7 +162,6 @@ public static class ProcessHelper
         if (processStartInfo is null)
         {
             var shell = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "powershell" : "pwsh";
-
             var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(command));
             processStartInfo = new ProcessStartInfo(shell, $"-NoProfile -EncodedCommand {encoded}")
             {
