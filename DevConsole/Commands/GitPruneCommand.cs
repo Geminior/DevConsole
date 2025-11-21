@@ -39,7 +39,7 @@ public sealed class GitPruneCommand : DevConsoleCommand
 
         var branchesToDelete = localBranches
                                .Where(b => !remoteBranches.Contains(b)
-                                           && (allowRoot || b.StartsWith(CreateBranchCommand.FeaturePrefix, StringComparison.OrdinalIgnoreCase))
+                                           && (allowRoot || b.Contains('/', StringComparison.OrdinalIgnoreCase))
                                            && !b.Contains(currentBranch, StringComparison.OrdinalIgnoreCase))
                                .ToArray();
 
