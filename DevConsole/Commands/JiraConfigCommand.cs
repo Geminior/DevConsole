@@ -2,14 +2,8 @@ using DevConsole.Infrastructure;
 using DevConsole.Infrastructure.Commands;
 using DevConsole.Infrastructure.Models;
 using DevConsole.Infrastructure.Services;
-using DevConsole.Infrastructure.Services.AzureDevOps;
-using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
-using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace DevConsole.Commands;
 
@@ -51,7 +45,7 @@ public sealed class JiraConfigCommand : DevConsoleCommand
 
         if (testResult != 0)
         {
-            ColorConsole.WriteFailure($"Jira Setup failed, ensure you have entered the correct credentials.");
+            ColorConsole.WriteFailure("Jira Setup failed, ensure you have entered the correct credentials.");
             return;
         }
 

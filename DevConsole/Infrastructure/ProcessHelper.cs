@@ -8,6 +8,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DevConsole.Infrastructure;
 
@@ -32,6 +34,7 @@ public static class ProcessHelper
             ColorConsole.WriteCommand(command);
         }
 
+        ProcessStart:
         var process = new Process
         {
             StartInfo = BuildProcessStartInfo(command, workingDirectory, environmentVariables: environmentVariables)
@@ -58,7 +61,15 @@ public static class ProcessHelper
         }
 
         process.BeginErrorReadLine();
-        var output = process.StandardOutput.ReadToEnd().Trim();
+
+        if (!TryReadOutput(out var output))
+        {
+            // ColorConsole.WriteLine(command, ConsoleColor.DarkGray);
+            ColorConsole.WriteLine($"Output read timed out, killing process and retrying...", ConsoleColor.Yellow);
+            process.WaitForExit(1000);
+            process.Kill();
+            goto ProcessStart;
+        }
 
         process.WaitForExit();
 
@@ -68,6 +79,28 @@ public static class ProcessHelper
         }
 
         return new ProcessResult(command, output, error, process.ExitCode);
+
+        bool TryReadOutput(out string result)
+        {
+            try
+            {
+                var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                result = process.StandardOutput.ReadToEndAsync(cancellationTokenSource.Token)
+                                .Result.Trim();
+
+                return true;
+            }
+            catch (TaskCanceledException)
+            {
+                result = string.Empty;
+                return false;
+            }
+            catch (AggregateException age) when (age.InnerException is TaskCanceledException)
+            {
+                result = string.Empty;
+                return false;
+            }
+        }
     }
 
     public static JsonProcessResult<T> GetJsonOutput<T>(string command,
