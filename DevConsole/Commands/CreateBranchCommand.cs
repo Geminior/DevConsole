@@ -162,7 +162,7 @@ public sealed class CreateBranchCommand : DevConsoleCommand
     {
         var patterns = new Dictionary<Regex, string>
         {
-            { new Regex(@"['"":()[\],\*]"), string.Empty },
+            { new Regex(@"['"":()[\],\*<>]"), string.Empty },
             { new Regex(@"\s*-\s*"), "-" },
             { new Regex(@"[ \\/]"), "-" },
             { new Regex("[&]"), "and" }
