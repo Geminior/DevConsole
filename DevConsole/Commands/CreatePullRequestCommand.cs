@@ -18,13 +18,15 @@ public sealed partial class CreatePullRequestCommand : DevConsoleCommand
     private readonly AzureDevOpsService _azureDevOpsService;
     private readonly DevConsoleConfig _devConsoleConfig;
     private readonly VersionBumper _versionBumper;
+    private readonly Prompts _promptService;
 
-    public CreatePullRequestCommand(AzureDevOpsService azureDevOpsService, VersionBumper versionBumper, DevConsoleConfig devConsoleConfig)
+    public CreatePullRequestCommand(AzureDevOpsService azureDevOpsService, VersionBumper versionBumper, DevConsoleConfig devConsoleConfig, Prompts promptService)
         : base("create-pull-request", "Create an Azure DevOps pull request based on the current branch and directory")
     {
         _azureDevOpsService = azureDevOpsService;
         _versionBumper = versionBumper;
         _devConsoleConfig = devConsoleConfig;
+        _promptService = promptService;
 
         AddOption(new Option<bool>(new[] { "-m", "--manual-create" }, "Manually create pull request"));
         AddOption(new Option<bool>(new[] { "-d", "--draft" }, "Create pull request in draft mode"));
@@ -37,12 +39,15 @@ public sealed partial class CreatePullRequestCommand : DevConsoleCommand
         AddOption(new Option<bool>(new[] { "-s", "--stop-open-browser" },
             "Prevents open browser after pull request is created. Used with --auto-create"));
 
+        AddOption(new Option<bool>(new[] { "-r", "--release" },
+            "Indicates that the pull request targets a release branch. Used with --auto-create"));
+
         AddAlias("cpr");
 
-        Handler = CommandHandler.Create<bool, bool, bool, string, bool>(DoCommand);
+        Handler = CommandHandler.Create<bool, bool, bool, string, bool, bool>(DoCommand);
     }
 
-    private void DoCommand(bool manualCreate, bool draft, bool noAutoComplete, string title, bool stopOpenBrowser)
+    private void DoCommand(bool manualCreate, bool draft, bool noAutoComplete, string title, bool stopOpenBrowser, bool release)
     {
         _azureDevOpsService.EnsureAzCliVersions();
 
@@ -53,10 +58,37 @@ public sealed partial class CreatePullRequestCommand : DevConsoleCommand
         }
         else
         {
-            workItemId = AutoCreatePullRequest(title, stopOpenBrowser, draft, noAutoComplete);
+            workItemId = AutoCreatePullRequest(title, stopOpenBrowser, draft, noAutoComplete, GetTargetBranch(release));
         }
 
         MoveWorkItemToCodeReview(workItemId);
+    }
+
+    private string? GetTargetBranch(bool release)
+    {
+        if (!release)
+        {
+            return null;
+        }
+
+        var releaseBranches = GetOutput("git branch -l -r").Output.Split('\n')
+                                                           .Where(b => b.Contains("origin/release/"))
+                                                           .Select(b => b.Replace("origin/release/", string.Empty).Trim()).ToArray();
+
+        if (releaseBranches.Length == 0)
+        {
+            ColorConsole.WriteLine("No release branches found", ConsoleColor.Red);
+            return null;
+        }
+
+        var targetBranch = _promptService.Select("Select release branch to target", releaseBranches);
+        if (string.IsNullOrWhiteSpace(targetBranch))
+        {
+            ColorConsole.WriteLine("Invalid release branch", ConsoleColor.Red);
+            return null;
+        }
+
+        return $"release/{targetBranch}";
     }
 
     private void MoveWorkItemToCodeReview(long? workItemId)
@@ -79,7 +111,7 @@ public sealed partial class CreatePullRequestCommand : DevConsoleCommand
         // Run($"az boards work-item update --id {workItemId} -f Microsoft.VSTS.Common.ResolvedReason=\"Fixed\" System.State=\"Code review\"", outputHandler: SuppressOutputHandler.Instance);
     }
 
-    private long? AutoCreatePullRequest(string? title, bool stopOpenBrowser, bool draft, bool noAutoComplete)
+    private long? AutoCreatePullRequest(string? title, bool stopOpenBrowser, bool draft, bool noAutoComplete, string? targetBranch = null)
     {
         var branchName = GetBranchName();
         var workItemId = GetWorkItemIdFromBranchName(branchName);
@@ -103,7 +135,8 @@ public sealed partial class CreatePullRequestCommand : DevConsoleCommand
 
                                                      //"--transition-work-items " +
                                                      //$"--work-items {workItemId} " +
-                                                     $"{(!stopOpenBrowser ? "--open" : string.Empty)}");
+                                                     $"{(!stopOpenBrowser ? "--open " : string.Empty)}" +
+                                                     (targetBranch is not null ? $"--target-branch {targetBranch}" : string.Empty));
 
         if (pullRequest.Output != null)
         {

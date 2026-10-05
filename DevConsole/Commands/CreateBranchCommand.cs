@@ -130,12 +130,13 @@ public sealed class CreateBranchCommand : DevConsoleCommand
             }
 
             sourceBranch = _promptService.Select("Select release branch to base the new branch on", releaseBranches);
-            sourceBranch = $"release/{sourceBranch}";
             if (string.IsNullOrWhiteSpace(sourceBranch))
             {
                 ColorConsole.WriteLine("Invalid release branch", ConsoleColor.Red);
                 return;
             }
+
+            sourceBranch = $"release/{sourceBranch}";
         }
 
         if (discardAllChanges)
