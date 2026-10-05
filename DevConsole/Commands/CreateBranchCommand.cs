@@ -23,7 +23,7 @@ public sealed class CreateBranchCommand : DevConsoleCommand
     {
         _azureDevOpsService = azureDevOpsService;
         _promptService = promptService;
-        Handler = CommandHandler.Create<string, bool, bool, bool, bool>(DoCommand);
+        Handler = CommandHandler.Create<string, bool, bool, bool, bool, bool>(DoCommand);
 
         AddAlias("cb");
 
@@ -32,6 +32,7 @@ public sealed class CreateBranchCommand : DevConsoleCommand
         AddOption(new Option<bool>(new[] { "-nm", "--no-master-checkout" }, "Do not switch to master branch before branch creation."));
         AddOption(new Option<bool>(new[] { "-d", "--discard-all-changes" }, "Discard all changes."));
         AddOption(new Option<bool>(new[] { "-ex", "--experiment" }, "Experimental branch."));
+        AddOption(new Option<bool>(new[] { "-r", "--release" }, "Release branch."));
         AddOption(new Option<bool>(new[] { "--ignore-work-item-state" }, "Ignores warning regarding work item state."));
     }
 
@@ -39,6 +40,7 @@ public sealed class CreateBranchCommand : DevConsoleCommand
                            bool noMasterCheckOut = false,
                            bool discardAllChanges = false,
                            bool experiment = false,
+                           bool release = false,
                            bool ignoreWorkItemState = false)
     {
         _azureDevOpsService.EnsureAzCliVersions();
@@ -113,6 +115,28 @@ public sealed class CreateBranchCommand : DevConsoleCommand
         //     ColorConsole.Write("Task found: ");
         //     ColorConsole.WriteLine(workItem.Fields.Title, ConsoleColor.Green);
         // }
+        var sourceBranch = "main";
+        if (release)
+        {
+            noMasterCheckOut = false;
+            var releaseBranches = GetOutput("git branch -l -r").Output.Split('\n')
+                                                               .Where(b => b.Contains("origin/release/"))
+                                                               .Select(b => b.Replace("origin/release/", string.Empty).Trim()).ToArray();
+
+            if (releaseBranches.Length == 0)
+            {
+                ColorConsole.WriteLine("No release branches found", ConsoleColor.Red);
+                return;
+            }
+
+            sourceBranch = _promptService.Select("Select release branch to base the new branch on", releaseBranches);
+            sourceBranch = $"release/{sourceBranch}";
+            if (string.IsNullOrWhiteSpace(sourceBranch))
+            {
+                ColorConsole.WriteLine("Invalid release branch", ConsoleColor.Red);
+                return;
+            }
+        }
 
         if (discardAllChanges)
         {
@@ -121,7 +145,7 @@ public sealed class CreateBranchCommand : DevConsoleCommand
 
         if (!noMasterCheckOut)
         {
-            Run("git checkout main");
+            Run($"git checkout {sourceBranch}");
             Run("git pull");
         }
 
