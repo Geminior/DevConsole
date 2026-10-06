@@ -157,6 +157,10 @@ public sealed class CreateBranchCommand : DevConsoleCommand
         {
             Run($"git branch {branchName}");
         }
+        else
+        {
+            ColorConsole.WriteLine($"Branch '{branchName}' already exists, checking it out", ConsoleColor.Yellow);
+        }
 
         Run($"git checkout {branchName}");
 
