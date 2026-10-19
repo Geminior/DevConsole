@@ -8,6 +8,7 @@ using System;
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
 using System.Linq;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.RegularExpressions;
 
@@ -125,6 +126,7 @@ public sealed partial class CreatePullRequestCommand : DevConsoleCommand
             title = (GetJiraItem(workItemId.Value).Output?.Summary ?? branchName).Replace("\"", "'");
         }
 
+        title = StringHelper.RemoveInvalidCharacters(title);
         var pullRequest = GetJsonOutput<PullRequest>("az repos pr create " +
                                                      $"--title \"{title}\" " +
                                                      $"--squash true " +

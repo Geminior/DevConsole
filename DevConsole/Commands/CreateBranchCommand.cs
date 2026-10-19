@@ -197,9 +197,6 @@ public sealed class CreateBranchCommand : DevConsoleCommand
             { new Regex("[&]"), "and" }
         };
 
-        input = input.Trim();
-        input = patterns.Aggregate(input, (current, pair) => pair.Key.Replace(current, pair.Value));
-        const string invalidCharactersPattern = @"[\.!\?`]";
-        return Regex.Replace(input, invalidCharactersPattern, string.Empty);
+        return StringHelper.RemoveInvalidCharacters(input, patterns);
     }
 }

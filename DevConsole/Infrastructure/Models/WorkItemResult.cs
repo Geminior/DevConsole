@@ -1,3 +1,4 @@
+using DevConsole.Infrastructure.Services;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -31,9 +32,7 @@ public class WorkItemResult
             { new Regex("[&]"), "and" }
         };
 
-        input = patterns.Aggregate(input, (current, pair) => pair.Key.Replace(current, pair.Value));
-        const string invalidCharactersPattern = @"[\.!\?`]";
-        return Regex.Replace(input, invalidCharactersPattern, string.Empty);
+        return StringHelper.RemoveInvalidCharacters(input, patterns);
     }
 }
 
